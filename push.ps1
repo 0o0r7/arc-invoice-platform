@@ -1,7 +1,7 @@
 param(
-  [string]$RepoUrl = "https://github.com/parsavat/Arc-Invoice.git",
+  [string]$RepoUrl = "https://github.com/parsavat/arc-invoice-platform.git",
   [string]$Branch = "main",
-  [string]$Message = ""
+  [string]$Message = "feat: initial push to arc-invoice-platform"
 )
 $ErrorActionPreference = "Stop"
 Set-Location -Path $PSScriptRoot
