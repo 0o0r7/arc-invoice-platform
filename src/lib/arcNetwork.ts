@@ -1,25 +1,32 @@
 import { BrowserProvider, Contract, formatUnits, parseUnits } from 'ethers';
 
 export const ARC_NETWORK = {
-  chainId: '0x4CF752',
+  chainId: '0x4CEF52', // 5042002 in hex
   chainName: 'Arc Testnet',
   nativeCurrency: {
     name: 'USDC',
     symbol: 'USDC',
-    decimals: 6,
+    decimals: 18, // Native gas is 18 decimals, but ERC20 is 6.
   },
   rpcUrls: ['https://rpc.testnet.arc.network'],
   blockExplorerUrls: ['https://testnet.arcscan.app'],
 };
 
+// Standard Arc Testnet USDC Address
+export const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000';
+
 export const INVOICE_MANAGER_ABI = [
-  'function createInvoice(address _recipient, uint256 _amount, string memory _description) external returns (uint256)',
+  'function createInvoice(address _recipient, uint256 _amount, string memory _description, string memory _metadata) external returns (uint256)',
   'function payInvoice(uint256 _invoiceId) external',
-  'function getInvoice(uint256 _invoiceId) external view returns (tuple(uint256 id, address creator, address recipient, uint256 amount, string description, uint256 createdAt, uint256 paidAt, bool isPaid))',
+  'function cancelInvoice(uint256 _invoiceId) external',
+  'function refundInvoice(uint256 _invoiceId) external',
+  'function getInvoice(uint256 _invoiceId) external view returns (tuple(uint256 id, address creator, address recipient, uint256 amount, string description, uint256 createdAt, uint256 paidAt, uint8 status, string metadata))',
   'function getUserInvoices(address _user) external view returns (uint256[])',
-  'function getInvoiceDetails(uint256[] memory _invoiceIds) external view returns (tuple(uint256 id, address creator, address recipient, uint256 amount, string description, uint256 createdAt, uint256 paidAt, bool isPaid)[])',
-  'event InvoiceCreated(uint256 indexed invoiceId, address indexed creator, address indexed recipient, uint256 amount, string description)',
+  'function getInvoiceDetails(uint256[] memory _invoiceIds) external view returns (tuple(uint256 id, address creator, address recipient, uint256 amount, string description, uint256 createdAt, uint256 paidAt, uint8 status, string metadata)[])',
+  'event InvoiceCreated(uint256 indexed invoiceId, address indexed creator, address indexed recipient, uint256 amount, string description, string metadata)',
   'event InvoicePaid(uint256 indexed invoiceId, address indexed payer, uint256 amount)',
+  'event InvoiceCancelled(uint256 indexed invoiceId)',
+  'event InvoiceRefunded(uint256 indexed invoiceId)'
 ];
 
 export const USDC_ABI = [
@@ -77,13 +84,19 @@ export async function getInvoiceManagerContract() {
 }
 
 export async function getUSDCContract() {
-  const usdcAddress = import.meta.env.VITE_ARC_USDC_ADDRESS;
+  const usdcAddress = import.meta.env.VITE_ARC_USDC_ADDRESS || ARC_USDC_ADDRESS;
   if (!usdcAddress) {
     throw new Error('USDC contract address not configured');
   }
   const signer = await getSigner();
   return new Contract(usdcAddress, USDC_ABI, signer);
 }
+
+// ARC Recommended Gas Settings
+export const GAS_SETTINGS = {
+  maxFeePerGas: parseUnits('20', 'gwei'),
+  maxPriorityFeePerGas: parseUnits('1', 'gwei'),
+};
 
 export function formatUSDC(amount: bigint): string {
   return formatUnits(amount, 6);
