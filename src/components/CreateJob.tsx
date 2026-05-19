@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { Briefcase, Loader2, User, ShieldCheck, Sparkles, Plus, Send } from 'lucide-react';
+import { Briefcase, Loader2, User, ShieldCheck } from 'lucide-react';
 import { getLedgerContract, parseUSDC, GAS_SETTINGS } from '../lib/arcNetwork';
-import { motion } from 'framer-motion';
-import { cn } from '../lib/utils';
 
 interface CreateJobProps {
   onJobCreated: () => void;
@@ -18,111 +16,121 @@ export default function CreateJob({ onJobCreated }: CreateJobProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsCreating(true);
+
     try {
       const contract = await getLedgerContract();
       const budgetUsdc = parseUSDC(budget);
-      const tx = await contract.createJob(provider, evaluator || provider, budgetUsdc, 7 * 24 * 3600, description, { ...GAS_SETTINGS });
+      const duration = 7 * 24 * 60 * 60; // Default 7 days
+
+      const tx = await contract.createJob(
+        provider,
+        evaluator || provider, // Default evaluator is provider if not set
+        budgetUsdc,
+        duration,
+        description,
+        { ...GAS_SETTINGS }
+      );
       await tx.wait();
-      setProvider(''); setEvaluator(''); setBudget(''); setDescription('');
+
+      setProvider('');
+      setEvaluator('');
+      setBudget('');
+      setDescription('');
       onJobCreated();
-    } catch (error) { console.error(error); }
-    finally { setIsCreating(false); }
+
+      alert('Job created on Arc Agentic Ledger!');
+    } catch (error) {
+      console.error('Error creating job:', error);
+      alert('Failed to create job.');
+    } finally {
+      setIsCreating(false);
+    }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card p-8 neo-glow before:bg-indigo-500/10"
-    >
-      <div className="flex items-center gap-4 mb-8">
-        <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20">
-          <Sparkles className="w-6 h-6 text-indigo-400" />
+    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="p-3 bg-indigo-100 rounded-xl">
+          <Briefcase className="w-6 h-6 text-indigo-600" />
         </div>
         <div>
-          <h2 className="text-xl font-black text-white tracking-tight uppercase">Initiate Commercial Job</h2>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Escrowed USDC Contract</p>
+          <h2 className="text-2xl font-bold text-gray-900">Hire Agent/Provider</h2>
+          <p className="text-sm text-gray-500 font-medium">Create a secure commercial job with USDC escrow</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Agent Address</label>
-            <div className="relative group">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+          <div>
+            <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Provider Address</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 value={provider}
                 onChange={(e) => setProvider(e.target.value)}
-                placeholder="0x..."
+                placeholder="0x... (Agent or Freelancer)"
                 required
-                className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-mono text-sm text-gray-200"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-mono text-sm"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Budget (USDC)</label>
+          <div>
+            <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Budget (USDC)</label>
             <input
               type="number"
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
               placeholder="0.00"
               step="0.01"
+              min="0.01"
               required
-              className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-black text-xl text-white placeholder:text-gray-700"
+              className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-lg"
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Evaluator / Attester</label>
-          <div className="relative group">
-            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+        <div>
+          <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Evaluator / Attester (Optional)</label>
+          <div className="relative">
+            <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               value={evaluator}
               onChange={(e) => setEvaluator(e.target.value)}
-              placeholder="Optional: Third-party verifier"
-              className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-mono text-sm text-gray-200"
+              placeholder="0x... (Third-party verifier or leave empty)"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-mono text-sm"
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Requirement & Prompt</label>
+        <div>
+          <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Job Description & Requirements</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe the job deliverables..."
+            placeholder="e.g. Generate 10 AI images for marketing campaign..."
             rows={3}
             required
-            className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all resize-none text-gray-200"
+            className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
           />
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.01, boxShadow: "0 20px 40px -20px rgba(99, 102, 241, 0.4)" }}
-          whileTap={{ scale: 0.98 }}
+        <button
           type="submit"
           disabled={isCreating}
-          className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 disabled:opacity-50 shadow-xl shadow-indigo-600/20"
+          className="w-full py-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 font-black uppercase tracking-widest shadow-lg shadow-indigo-200"
         >
           {isCreating ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Synchronizing...</span>
-            </>
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" /> Deploying Job...
+            </span>
           ) : (
-            <>
-              <Plus className="w-5 h-5" />
-              <span>Deploy Commercial Agentic Job</span>
-              <Send className="w-4 h-4 opacity-50" />
-            </>
+            'Initiate Agentic Contract'
           )}
-        </motion.button>
+        </button>
       </form>
-    </motion.div>
+    </div>
   );
 }

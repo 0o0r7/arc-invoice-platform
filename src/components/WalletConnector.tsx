@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Wallet, LogOut, ChevronRight, Unplug } from 'lucide-react';
+import { Wallet, LogOut } from 'lucide-react';
 import { connectWallet } from '../lib/arcNetwork';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface WalletConnectorProps {
   onConnect: (address: string) => void;
@@ -14,12 +13,16 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
 
   useEffect(() => {
     checkConnection();
+
     if (window.ethereum) {
       window.ethereum.on?.('accountsChanged', handleAccountsChanged);
       window.ethereum.on?.('chainChanged', () => window.location.reload());
     }
+
     return () => {
-      if (window.ethereum) window.ethereum.removeListener?.('accountsChanged', handleAccountsChanged);
+      if (window.ethereum) {
+        window.ethereum.removeListener?.('accountsChanged', handleAccountsChanged);
+      }
     };
   }, []);
 
@@ -56,6 +59,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
       onConnect(connectedAddress);
     } catch (error) {
       console.error('Error connecting wallet:', error);
+      alert('Failed to connect wallet. Please make sure MetaMask is installed and try again.');
     } finally {
       setIsConnecting(false);
     }
@@ -66,50 +70,31 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
     onDisconnect();
   }
 
+  if (address) {
+    return (
+      <div className="flex items-center gap-3">
+        <div className="px-4 py-2 bg-green-100 text-green-800 rounded-lg font-mono text-sm">
+          {address.slice(0, 6)}...{address.slice(-4)}
+        </div>
+        <button
+          onClick={handleDisconnect}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Disconnect"
+        >
+          <LogOut className="w-5 h-5 text-gray-600" />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-4">
-      <AnimatePresence mode="wait">
-        {address ? (
-          <motion.div
-            key="connected"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="flex items-center gap-2 p-1 pl-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md"
-          >
-            <div className="flex flex-col items-start pr-4 border-r border-white/10">
-              <span className="text-[10px] font-black uppercase tracking-tighter text-indigo-400">ARC Explorer</span>
-              <span className="text-xs font-mono font-bold text-gray-200">
-                {address.slice(0, 6)}...{address.slice(-4)}
-              </span>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={handleDisconnect}
-              className="p-3 hover:bg-red-500/20 text-red-400 rounded-xl transition-colors"
-              title="Disconnect"
-            >
-              <Unplug className="w-4 h-4" />
-            </motion.button>
-          </motion.div>
-        ) : (
-          <motion.button
-            key="connect"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(99, 102, 241, 0.4)" }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleConnect}
-            disabled={isConnecting}
-            className="group flex items-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-500/20 disabled:opacity-50"
-          >
-            <Wallet className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-            {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </motion.button>
-        )}
-      </AnimatePresence>
-    </div>
+    <button
+      onClick={handleConnect}
+      disabled={isConnecting}
+      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+    >
+      <Wallet className="w-5 h-5" />
+      {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+    </button>
   );
 }
