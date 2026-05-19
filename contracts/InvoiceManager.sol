@@ -5,16 +5,24 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+/**
+ * @title InvoiceManager
+ * @dev Optimized for ARC Network - The Economic OS for the Internet
+ * Implements real-world invoice workflows with stablecoin payments.
+ */
 contract InvoiceManager is Ownable, ReentrancyGuard {
+    enum Status { Pending, Paid, Cancelled, Refunded }
+
     struct Invoice {
         uint256 id;
         address creator;
         address recipient;
-        uint256 amount;
+        uint256 amount; // USDC (6 decimals)
         string description;
         uint256 createdAt;
         uint256 paidAt;
-        bool isPaid;
+        Status status;
+        string metadata; // For AI agent data or extra info (ERC-8183 style)
     }
 
     IERC20 public usdc;
@@ -27,7 +35,8 @@ contract InvoiceManager is Ownable, ReentrancyGuard {
         address indexed creator,
         address indexed recipient,
         uint256 amount,
-        string description
+        string description,
+        string metadata
     );
 
     event InvoicePaid(
@@ -36,6 +45,9 @@ contract InvoiceManager is Ownable, ReentrancyGuard {
         uint256 amount
     );
 
+    event InvoiceCancelled(uint256 indexed invoiceId);
+    event InvoiceRefunded(uint256 indexed invoiceId);
+
     constructor(address _usdc) Ownable(msg.sender) {
         usdc = IERC20(_usdc);
     }
@@ -43,7 +55,8 @@ contract InvoiceManager is Ownable, ReentrancyGuard {
     function createInvoice(
         address _recipient,
         uint256 _amount,
-        string memory _description
+        string memory _description,
+        string memory _metadata
     ) external returns (uint256) {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount > 0, "Amount must be greater than 0");
@@ -59,7 +72,8 @@ contract InvoiceManager is Ownable, ReentrancyGuard {
             description: _description,
             createdAt: block.timestamp,
             paidAt: 0,
-            isPaid: false
+            status: Status.Pending,
+            metadata: _metadata
         });
 
         userInvoices[msg.sender].push(invoiceId);
@@ -70,7 +84,8 @@ contract InvoiceManager is Ownable, ReentrancyGuard {
             msg.sender,
             _recipient,
             _amount,
-            _description
+            _description,
+            _metadata
         );
 
         return invoiceId;
@@ -79,7 +94,7 @@ contract InvoiceManager is Ownable, ReentrancyGuard {
     function payInvoice(uint256 _invoiceId) external nonReentrant {
         Invoice storage invoice = invoices[_invoiceId];
         require(invoice.id != 0, "Invoice does not exist");
-        require(!invoice.isPaid, "Invoice already paid");
+        require(invoice.status == Status.Pending, "Invoice not in pending status");
         require(msg.sender == invoice.recipient, "Only recipient can pay");
 
         require(
@@ -87,10 +102,33 @@ contract InvoiceManager is Ownable, ReentrancyGuard {
             "USDC transfer failed"
         );
 
-        invoice.isPaid = true;
+        invoice.status = Status.Paid;
         invoice.paidAt = block.timestamp;
 
         emit InvoicePaid(_invoiceId, msg.sender, invoice.amount);
+    }
+
+    function cancelInvoice(uint256 _invoiceId) external {
+        Invoice storage invoice = invoices[_invoiceId];
+        require(msg.sender == invoice.creator, "Only creator can cancel");
+        require(invoice.status == Status.Pending, "Can only cancel pending invoices");
+
+        invoice.status = Status.Cancelled;
+        emit InvoiceCancelled(_invoiceId);
+    }
+
+    function refundInvoice(uint256 _invoiceId) external nonReentrant {
+        Invoice storage invoice = invoices[_invoiceId];
+        require(msg.sender == invoice.creator, "Only creator can refund");
+        require(invoice.status == Status.Paid, "Can only refund paid invoices");
+
+        require(
+            usdc.transferFrom(msg.sender, invoice.recipient, invoice.amount),
+            "USDC refund transfer failed"
+        );
+
+        invoice.status = Status.Refunded;
+        emit InvoiceRefunded(_invoiceId);
     }
 
     function getInvoice(uint256 _invoiceId)
