@@ -27,7 +27,9 @@ export const LEDGER_ABI = [
   'function reputationScore(address _user) external view returns (uint256)',
   'event JobCreated(uint256 indexed jobId, address indexed client, address indexed provider, string description)',
   'event JobFunded(uint256 indexed jobId, uint256 amount)',
+  'event JobSubmitted(uint256 indexed jobId, string deliverableHash)',
   'event JobCompleted(uint256 indexed jobId, address indexed evaluator)',
+  'event JobRejected(uint256 indexed jobId, string reason)',
   'event ReputationUpdated(address indexed user, uint256 newScore)'
 ];
 

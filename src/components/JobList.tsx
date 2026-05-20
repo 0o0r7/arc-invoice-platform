@@ -12,6 +12,7 @@ import {
   Award
 } from 'lucide-react';
 import { getLedgerContract, getUSDCContract, formatUSDC, GAS_SETTINGS } from '../lib/arcNetwork';
+import { cn } from '../lib/utils';
 
 enum JobState { Open, Funded, Submitted, Completed, Rejected, Expired }
 
@@ -113,12 +114,12 @@ export default function JobList({ userAddress, refreshTrigger }: JobListProps) {
 
   function getStatusStyle(state: number) {
     switch (state) {
-      case JobState.Open: return "bg-gray-100 text-gray-600";
-      case JobState.Funded: return "bg-blue-100 text-blue-600 border border-blue-200";
-      case JobState.Submitted: return "bg-yellow-100 text-yellow-600 border border-yellow-200";
-      case JobState.Completed: return "bg-green-100 text-green-600 border border-green-200";
-      case JobState.Rejected: return "bg-red-100 text-red-600 border border-red-200";
-      default: return "bg-gray-100 text-gray-500";
+      case JobState.Open: return "bg-white/5 text-gray-400 border-white/10";
+      case JobState.Funded: return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+      case JobState.Submitted: return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+      case JobState.Completed: return "bg-green-500/10 text-green-400 border-green-500/20";
+      case JobState.Rejected: return "bg-red-500/10 text-red-400 border-red-500/20";
+      default: return "bg-white/5 text-gray-500 border-white/5";
     }
   }
 
@@ -129,29 +130,33 @@ export default function JobList({ userAddress, refreshTrigger }: JobListProps) {
   if (isLoading) return <div className="p-12 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600" /></div>;
 
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl p-6 text-white flex items-center justify-between shadow-xl">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md">
-            <Award className="w-8 h-8" />
+    <div className="space-y-10">
+      <div className="bg-gradient-to-br from-indigo-600 via-indigo-500 to-blue-600 rounded-[32px] p-8 text-white flex items-center justify-between shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+        <div className="relative flex items-center gap-6">
+          <div className="w-20 h-20 bg-white/10 rounded-2xl backdrop-blur-2xl flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform duration-500">
+            <Award className="w-10 h-10 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-black uppercase tracking-widest opacity-80">Reputation Score</h3>
-            <p className="text-4xl font-black">{reputation}</p>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-60 mb-2">Reputation Score</h3>
+            <p className="text-6xl font-black tracking-tighter leading-none">{reputation}</p>
           </div>
         </div>
-        <Activity className="w-12 h-12 opacity-20" />
+        <Activity className="w-24 h-24 opacity-10 absolute -right-4 -bottom-4 rotate-12" />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-50 flex items-center gap-2">
-          <Terminal className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-xl font-bold text-gray-900">Active Agentic Jobs</h2>
+      <div className="glass-card overflow-hidden">
+        <div className="p-8 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+             <Terminal className="w-5 h-5 text-indigo-400" />
+             <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Active Agentic Jobs</h2>
+          </div>
+          <div className="flex h-2 w-2 rounded-full bg-indigo-500 animate-ping"></div>
         </div>
 
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-white/5">
           {jobs.length === 0 ? (
-            <div className="p-12 text-center text-gray-400 font-medium">No commercial jobs found.</div>
+            <div className="p-20 text-center text-gray-600 text-[10px] font-black uppercase tracking-[0.4em]">No commercial jobs found.</div>
           ) : (
             jobs.map(job => {
               const isClient = job.client.toLowerCase() === userAddress.toLowerCase();
@@ -159,61 +164,64 @@ export default function JobList({ userAddress, refreshTrigger }: JobListProps) {
               const isEvaluator = job.evaluator.toLowerCase() === userAddress.toLowerCase();
 
               return (
-                <div key={job.id.toString()} className="p-6 hover:bg-gray-50/50 transition-colors">
-                  <div className="flex flex-col lg:flex-row justify-between gap-6">
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusStyle(Number(job.state))}`}>
+                <div key={job.id.toString()} className="p-8 hover:bg-white/[0.02] transition-colors group">
+                  <div className="flex flex-col lg:flex-row justify-between gap-10">
+                    <div className="flex-1 space-y-5">
+                      <div className="flex items-center gap-4">
+                        <span className={cn(
+                          "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border",
+                          getStatusStyle(Number(job.state))
+                        )}>
                           {getStatusLabel(Number(job.state))}
                         </span>
-                        <span className="text-xs font-mono text-gray-400">ID: #{job.id.toString().padStart(4, '0')}</span>
+                        <span className="text-[10px] font-mono text-gray-600">ARC_ID_{job.id.toString().padStart(4, '0')}</span>
                       </div>
 
-                      <h4 className="text-lg font-bold text-gray-900">{job.description}</h4>
+                      <h4 className="text-xl font-black text-white tracking-tight leading-tight">{job.description}</h4>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-medium">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400">Client:</span>
-                          <span className="text-indigo-600 truncate max-w-[120px]">{job.client}</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-[10px] font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-3">
+                          <span className="text-gray-600">Client</span>
+                          <span className="text-indigo-400 font-mono lowercase">{job.client.slice(0,10)}...</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400">Provider:</span>
-                          <span className="text-indigo-600 truncate max-w-[120px]">{job.provider}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-gray-600">Provider</span>
+                          <span className="text-indigo-400 font-mono lowercase">{job.provider.slice(0,10)}...</span>
                         </div>
                       </div>
 
                       {job.deliverableHash && (
-                        <div className="p-3 bg-indigo-50 rounded-lg flex items-center justify-between group">
-                          <div className="flex items-center gap-2 overflow-hidden">
-                            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                            <span className="text-xs font-mono text-indigo-700 truncate">{job.deliverableHash}</span>
+                        <div className="p-4 bg-white/[0.03] rounded-xl flex items-center justify-between border border-white/5">
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                            <span className="text-[10px] font-mono text-gray-400 truncate">{job.deliverableHash}</span>
                           </div>
-                          <a href={job.deliverableHash} target="_blank" className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ExternalLink className="w-4 h-4" />
+                          <a href={job.deliverableHash} target="_blank" className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+                            <ExternalLink className="w-4 h-4 text-indigo-400" />
                           </a>
                         </div>
                       )}
                     </div>
 
-                    <div className="flex flex-col items-end justify-between gap-4">
+                    <div className="flex flex-col items-end justify-between gap-6">
                       <div className="text-right">
-                        <div className="text-3xl font-black text-gray-900 leading-none">${formatUSDC(job.budget)}</div>
-                        <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Escrowed USDC</div>
+                        <div className="text-4xl font-black text-white tracking-tighter leading-none">${formatUSDC(job.budget)}</div>
+                        <div className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">Escrow Protected</div>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-4">
                         {isClient && Number(job.state) === JobState.Open && (
-                          <button onClick={() => handleFund(job)} disabled={actionId === job.id} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-black uppercase tracking-wider shadow-lg shadow-indigo-100">
-                            {actionId === job.id ? 'Funding...' : 'Fund Escrow'}
+                          <button onClick={() => handleFund(job)} disabled={actionId === job.id} className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-indigo-500/20">
+                            {actionId === job.id ? 'Processing...' : 'Fund Escrow'}
                           </button>
                         )}
                         {isProvider && Number(job.state) === JobState.Funded && (
-                          <button onClick={() => handleSubmit(job.id)} disabled={actionId === job.id} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black uppercase tracking-wider">
+                          <button onClick={() => handleSubmit(job.id)} disabled={actionId === job.id} className="px-6 py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all">
                             Submit Work
                           </button>
                         )}
                         {isEvaluator && Number(job.state) === JobState.Submitted && (
-                          <button onClick={() => handleComplete(job.id)} disabled={actionId === job.id} className="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-black uppercase tracking-wider">
+                          <button onClick={() => handleComplete(job.id)} disabled={actionId === job.id} className="px-6 py-3 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all">
                             Approve & Pay
                           </button>
                         )}
