@@ -1,69 +1,48 @@
 import axios from 'axios';
-import { initiateDeveloperControlledWalletsClient } from '@circle-fin/developer-controlled-wallets';
-
-const CIRCLE_API_URL = 'https://api.circle.com/v1/w3s';
-
-// Initialize the Circle SDK client
-export const circleClient = initiateDeveloperControlledWalletsClient({
-  apiKey: import.meta.env.VITE_CIRCLE_API_KEY || '',
-  entitySecret: import.meta.env.VITE_ENTITY_SECRET || '',
-});
 
 /**
+ * SECURITY REMEDIATION (May 2026):
  * Circle Developer Controlled Wallets Service
- * Note: In a production app, many of these calls would happen on a secure backend.
+ *
+ * IMPORTANT: In a production environment, all mutating calls (createWalletSet, createWallets, transferUSDC)
+ * MUST be performed on a secure backend to protect the Entity Secret and API Key.
+ * This client is now refactored to use a backend proxy for secure operations.
  */
+
+const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3001/api/circle';
+const CIRCLE_API_URL = 'https://api.circle.com/v1/w3s';
+
 export const CircleWalletService = {
   /**
-   * Register Entity Secret (Public Key) with Circle
-   * Only needs to be done once per entity.
-   */
-  registerEntity: async () => {
-    const response = await circleClient.registerEntity({
-      publicKey: import.meta.env.VITE_ENTITY_PUBLIC_KEY,
-    });
-    return response;
-  },
-
-  /**
-   * Create a new Wallet Set
+   * Create a new Wallet Set (Proxied via Backend)
    */
   createWalletSet: async (name: string) => {
-    const response = await circleClient.createWalletSet({
-      name,
-    });
+    const response = await axios.post(`${BACKEND_API_URL}/wallet-sets`, { name });
     return response.data?.walletSet;
   },
 
   /**
-   * Create wallets within a set
+   * Create wallets within a set (Proxied via Backend)
    */
   createWallets: async (walletSetId: string, count: number = 1) => {
-    const response = await circleClient.createWallets({
-      accountType: 'SCA',
-      blockchains: ['ARC-TESTNET'],
-      count,
-      walletSetId,
-    });
+    const response = await axios.post(`${BACKEND_API_URL}/wallets`, { walletSetId, count });
     return response.data?.wallets;
   },
 
   /**
-   * Execute a transfer from a developer-controlled wallet
+   * Execute a transfer (Proxied via Backend)
    */
   transferUSDC: async (walletId: string, destinationAddress: string, amount: string) => {
-    const response = await circleClient.createTransaction({
+    const response = await axios.post(`${BACKEND_API_URL}/transfers`, {
       walletId,
-      tokenId: 'USDC-ARC', // Specific token ID for ARC Testnet USDC
-      amounts: [amount],
       destinationAddress,
-      feeLevel: 'MEDIUM',
+      amount
     });
     return response.data?.id;
   },
 
   /**
-   * Get wallet balance
+   * Get wallet balance (Read-only, can be client-side with restricted API key)
    */
   getWalletBalance: async (walletId: string) => {
     const response = await axios.get(`${CIRCLE_API_URL}/wallets/${walletId}/balances`, {

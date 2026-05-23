@@ -20,11 +20,16 @@ contract ArcAgentIdentity is ERC721URIStorage, Ownable {
 
     mapping(uint256 => AgentProfile) public agentProfiles;
     mapping(address => uint256) public addressToId;
+    mapping(address => bool) public authorizedCallers;
 
     event AgentRegistered(uint256 indexed tokenId, address indexed owner, string name);
     event ReputationUpdated(uint256 indexed tokenId, uint256 newScore);
 
     constructor() ERC721("Arc Agent Identity", "ARCID") Ownable(msg.sender) {}
+
+    function setAuthorizedCaller(address caller, bool status) external onlyOwner {
+        authorizedCallers[caller] = status;
+    }
 
     /**
      * @notice Register a new Agent/Provider
@@ -53,7 +58,7 @@ contract ArcAgentIdentity is ERC721URIStorage, Ownable {
      * @notice Update agent reputation (only callable by authorized ledger/owner)
      */
     function updateReputation(address agentAddress, int256 adjustment) external {
-        // In a real app, we'd check if msg.sender is the authorized Ledger contract
+        require(authorizedCallers[msg.sender] || msg.sender == owner(), "Not authorized");
         uint256 tokenId = addressToId[agentAddress];
         require(tokenId != 0, "Agent not registered");
 
@@ -72,5 +77,16 @@ contract ArcAgentIdentity is ERC721URIStorage, Ownable {
         uint256 tokenId = addressToId[agentAddress];
         require(tokenId != 0, "Agent not registered");
         return agentProfiles[tokenId];
+    }
+
+    /**
+     * @notice Soulbound Implementation: Disable transfers to maintain identity integrity
+     */
+    function _update(address to, uint256 tokenId, address auth) internal virtual override returns (address) {
+        address from = _ownerOf(tokenId);
+        if (from != address(0) && to != address(0)) {
+            revert("Soulbound: Transfers disabled");
+        }
+        return super._update(to, tokenId, auth);
     }
 }
