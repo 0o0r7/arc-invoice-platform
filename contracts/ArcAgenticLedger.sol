@@ -5,6 +5,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+interface IArcAgentIdentity {
+    function updateReputation(address agentAddress, int256 adjustment) external;
+}
+
 /**
  * @title ArcAgenticLedger
  * @dev Implements ERC-8183 (Agentic Commerce) and ERC-8004 inspired reputation.
@@ -28,13 +32,13 @@ contract ArcAgenticLedger is Ownable, ReentrancyGuard {
     }
 
     IERC20 public immutable usdc;
+    IArcAgentIdentity public agentIdentity;
     uint256 public jobCounter;
     uint256 public constant FEE_PERCENT = 1; // 0.1% platform fee (example)
     address public treasury;
 
     mapping(uint256 => Job) public jobs;
     mapping(address => uint256[]) public userJobs;
-    mapping(address => uint256) public reputationScore; // Simple ERC-8004 style score
 
     event JobCreated(uint256 indexed jobId, address indexed client, address indexed provider, string description);
     event JobFunded(uint256 indexed jobId, uint256 amount);
@@ -43,9 +47,10 @@ contract ArcAgenticLedger is Ownable, ReentrancyGuard {
     event JobRejected(uint256 indexed jobId, string reason);
     event ReputationUpdated(address indexed user, uint256 newScore);
 
-    constructor(address _usdc, address _treasury) Ownable(msg.sender) {
+    constructor(address _usdc, address _treasury, address _identity) Ownable(msg.sender) {
         usdc = IERC20(_usdc);
         treasury = _treasury;
+        agentIdentity = IArcAgentIdentity(_identity);
     }
 
     /**
@@ -137,10 +142,12 @@ contract ArcAgenticLedger is Ownable, ReentrancyGuard {
         }
 
         job.state = JobState.Completed;
-        reputationScore[job.provider] += 10; // Boost reputation
+
+        if (address(agentIdentity) != address(0)) {
+            agentIdentity.updateReputation(job.provider, 10);
+        }
 
         emit JobCompleted(_jobId, msg.sender);
-        emit ReputationUpdated(job.provider, reputationScore[job.provider]);
     }
 
     /**

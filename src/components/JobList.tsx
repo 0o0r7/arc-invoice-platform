@@ -11,7 +11,7 @@ import {
   Activity,
   Award
 } from 'lucide-react';
-import { getLedgerContract, getUSDCContract, formatUSDC, GAS_SETTINGS } from '../lib/arcNetwork';
+import { getLedgerContract, getUSDCContract, getIdentityContract, formatUSDC, GAS_SETTINGS } from '../lib/arcNetwork';
 import { cn } from '../lib/utils';
 
 enum JobState { Open, Funded, Submitted, Completed, Rejected, Expired }
@@ -50,9 +50,16 @@ export default function JobList({ userAddress, refreshTrigger }: JobListProps) {
     setIsLoading(true);
     try {
       const contract = await getLedgerContract();
+      const identity = await getIdentityContract();
+
       const jobIds = await contract.getUserJobs(userAddress);
-      const score = await contract.reputationScore(userAddress);
-      setReputation(Number(score));
+
+      try {
+        const profile = await identity.getAgentProfile(userAddress);
+        setReputation(Number(profile.reputationScore));
+      } catch (e) {
+        setReputation(0);
+      }
 
       if (jobIds.length > 0) {
         const details = await contract.getJobDetails(jobIds);

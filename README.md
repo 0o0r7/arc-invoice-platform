@@ -1,71 +1,82 @@
-# Arc Agentic Ledger - Advanced Commerce on ARC Network
+# Arc Agentic OS — Institutional Agent Ledger v2.5
 
-Arc Agentic Ledger is a trustless job and payment management system built specifically for the AI Agent economy on Circle's ARC Network. It moves beyond simple invoices by implementing a robust Escrow and Attestation lifecycle, fully compliant with emerging agentic commerce standards like ERC-8183 and ERC-8004.
-
-## 🚀 Key Disruptive Features
-
-- **Agentic Escrow (ERC-8183):** Funds are locked in smart contracts and only released upon successful delivery and evaluation.
-- **Onchain Reputation (ERC-8004):** Providers (Humans or Agents) build a verifiable reputation score with every successful delivery.
-- **Sub-second Finality:** Transactions settle in under 1 second thanks to ARC's Malachite consensus.
-- **USDC-Native Economics:** Gas fees and payments are exclusively in USDC, eliminating volatility.
-- **Evaluator Role:** Supports third-party verification to ensure quality and trust in autonomous transactions.
-
-## 🛠 Tech Stack
-
-- **Smart Contracts:** Solidity 0.8.20 (Foundry framework)
-- **Frontend:** React + TypeScript + Vite + Tailwind CSS
-- **Blockchain:** ARC Network Testnet (Chain ID: 5042002)
-- **Web3 Interface:** Ethers.js v6
-
-## 📜 Contract Architecture
-
-### Job Lifecycle (State Machine)
-1. **Open:** Job created with a defined budget and evaluator.
-2. **Funded:** Client deposits USDC into the contract escrow.
-3. **Submitted:** Provider (Agent) delivers the work and registers the hash.
-4. **Completed:** Evaluator approves the work, triggering instant payout.
-5. **Rejected:** Evaluator or Client rejects the work, triggering a full refund.
-6. **Expired:** If work isn't delivered by the deadline, client can reclaim funds.
-
-## 🏁 Quick Start
-
-### Prerequisites
-1. **MetaMask** wallet
-2. **Node.js** 18+
-3. **Foundry** (for contracts)
-
-### Installation
-```bash
-npm install
-forge install
-```
-
-### Deploy to ARC Testnet
-1. Configure `.env`:
-```env
-PRIVATE_KEY=your_key
-ARC_USDC_ADDRESS=0x3600000000000000000000000000000000000000
-VITE_LEDGER_ADDRESS=deployed_contract_address
-```
-
-2. Run deployment:
-```bash
-forge script script/Deploy.s.sol:DeployScript --rpc-url arc_testnet --broadcast
-```
-
-## 🧪 Testing
-
-We ensure 100% logic reliability for high-stakes commercial transactions:
-```bash
-forge test
-```
-
-## 🌐 ARC Network Details
-- **RPC:** https://rpc.testnet.arc.network
-- **Chain ID:** 5042002 (Hex: 0x4CEF52)
-- **Explorer:** https://testnet.arcscan.app
-- **Faucet:** https://faucet.circle.com
+**Arc Agentic OS** is a production-grade decentralized commerce engine purpose-built for the AI Agent economy on Circle's **ARC Network**. It combines trustless escrow settlement with verifiable on-chain identity (ERC-8004) and institutional wallet infrastructure.
 
 ---
 
-**Built for the future of Internet-Native Economic Activity.**
+## 🚀 Key Features
+
+### 1. Circle Institutional Infrastructure
+- **Developer-Controlled Wallets**: Native integration with Circle's W3S stack.
+- **Role-Based Wallets**: Programmatic provisioning of Client and Provider wallets.
+- **USDC-Native**: Automatic funding and payouts using USDC on ARC.
+
+### 2. ERC-8004 Verifiable Identity
+- **Agent Reputation**: On-chain reputation scoring that updates automatically upon job completion.
+- **Agent Registration**: ERC-721 based identity management for AI Agents and service providers.
+- **Immutable Provenance**: Verifiable metadata linked to agent performance.
+
+### 3. Agentic Escrow Protocol (ERC-8183)
+- **Multi-State Machine**: Open → Funded → Submitted → Completed → Settled.
+- **Deterministic Finality**: Sub-second settlement powered by ARC's Malachite BFT.
+- **Fee Management**: Built-in treasury and platform fee logic.
+
+---
+
+## 🛠️ Tech Stack
+- **Smart Contracts**: Solidity + Foundry (OpenZeppelin)
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: TailwindCSS + Framer Motion (Glassmorphism v2)
+- **Web3**: Ethers.js v6 + Circle Developer SDK
+- **Network**: ARC Testnet (Chain ID: 5042002)
+
+---
+
+## 🔧 Setup & Installation
+
+### 1. Prerequisites
+- Node.js v18+
+- MetaMask (configured for ARC Testnet)
+- [Circle Console](https://console.circle.com/) API Key & Entity Secret
+
+### 2. Environment Configuration
+Create a `.env` file in the root:
+```env
+# Circle Configuration
+VITE_CIRCLE_API_KEY=YOUR_API_KEY
+VITE_ENTITY_SECRET=YOUR_32_BYTE_HEX_SECRET
+
+# Contract Addresses
+VITE_LEDGER_ADDRESS=0x...
+VITE_AGENT_IDENTITY_ADDRESS=0x...
+
+# ARC Network
+VITE_ARC_RPC_URL=https://rpc.testnet.arc.network
+VITE_ARC_CHAIN_ID=5042002
+```
+
+### 3. Run Development Server
+```bash
+npm install
+npm run dev
+```
+
+---
+
+## 📜 Smart Contracts
+- **ArcAgenticLedger.sol**: The core escrow and settlement logic.
+- **ArcAgentIdentity.sol**: ERC-8004 implementation for agent identity and reputation.
+
+---
+
+## 🛡️ Security & Compliance
+- **Reentrancy Protection**: All financial functions use OpenZeppelin's `ReentrancyGuard`.
+- **Access Control**: Owner-restricted reputation updates and treasury management.
+- **Deterministic Settlement**: No risk of chain reorganizations on ARC.
+
+---
+
+## 🌐 Links
+- **Network Explorer**: [testnet.arcscan.app](https://testnet.arcscan.app)
+- **Circle Documentation**: [developers.circle.com](https://developers.circle.com/)
+- **Project Repository**: [github.com/0o0r7/arc-invoice-platform](https://github.com/0o0r7/arc-invoice-platform)

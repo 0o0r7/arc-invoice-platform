@@ -24,13 +24,20 @@ export const LEDGER_ABI = [
   'function getJob(uint256 _jobId) external view returns (tuple(uint256 id, address client, address provider, address evaluator, uint256 budget, uint8 state, string description, string deliverableHash, uint256 createdAt, uint256 expiresAt, uint256 platformFee))',
   'function getUserJobs(address _user) external view returns (uint256[])',
   'function getJobDetails(uint256[] memory _jobIds) external view returns (tuple(uint256 id, address client, address provider, address evaluator, uint256 budget, uint8 state, string description, string deliverableHash, uint256 createdAt, uint256 expiresAt, uint256 platformFee)[])',
-  'function reputationScore(address _user) external view returns (uint256)',
   'event JobCreated(uint256 indexed jobId, address indexed client, address indexed provider, string description)',
   'event JobFunded(uint256 indexed jobId, uint256 amount)',
   'event JobSubmitted(uint256 indexed jobId, string deliverableHash)',
   'event JobCompleted(uint256 indexed jobId, address indexed evaluator)',
   'event JobRejected(uint256 indexed jobId, string reason)',
   'event ReputationUpdated(address indexed user, uint256 newScore)'
+];
+
+export const IDENTITY_ABI = [
+  'function registerAgent(string memory name, string memory metadataUri) external returns (uint256)',
+  'function getAgentProfile(address agentAddress) external view returns (tuple(string name, uint256 reputationScore, uint256 totalJobsCompleted, bool isActive))',
+  'function addressToId(address) external view returns (uint256)',
+  'event AgentRegistered(uint256 indexed tokenId, address indexed owner, string name)',
+  'event ReputationUpdated(uint256 indexed tokenId, uint256 newScore)'
 ];
 
 export const USDC_ABI = [
@@ -75,6 +82,13 @@ export async function getLedgerContract() {
   if (!contractAddress) throw new Error('Ledger contract address not configured');
   const signer = await getSigner();
   return new Contract(contractAddress, LEDGER_ABI, signer);
+}
+
+export async function getIdentityContract() {
+  const contractAddress = import.meta.env.VITE_AGENT_IDENTITY_ADDRESS;
+  if (!contractAddress) throw new Error('Identity contract address not configured');
+  const signer = await getSigner();
+  return new Contract(contractAddress, IDENTITY_ABI, signer);
 }
 
 export async function getUSDCContract() {

@@ -3,6 +3,8 @@ import { Terminal, Shield, Wallet, Sparkles, Cpu, Lock, ChevronRight, Activity, 
 import WalletConnector from './components/WalletConnector';
 import CreateJob from './components/CreateJob';
 import JobList from './components/JobList';
+import AgentIdentity from './components/AgentIdentity';
+import CircleWalletManager from './components/CircleWalletManager';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function App() {
@@ -105,6 +107,8 @@ function App() {
               className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start"
             >
               <div className="lg:col-span-5 space-y-10 lg:sticky lg:top-32">
+                <AgentIdentity userAddress={userAddress} />
+                <CircleWalletManager />
                 <CreateJob onJobCreated={handleRefresh} />
 
                 <div className="glass-card p-10">
