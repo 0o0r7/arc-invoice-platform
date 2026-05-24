@@ -5,17 +5,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-interface IArcAgentIdentity {
-    function updateReputation(address agentAddress, int256 adjustment) external;
-}
-
 /**
  * @title ArcAgenticLedger
  * @dev Implements ERC-8183 (Agentic Commerce) and ERC-8004 inspired reputation.
  * Purpose-built for ARC Network - The Economic OS for the Internet.
  */
 contract ArcAgenticLedger is Ownable, ReentrancyGuard {
-    enum JobState { Open, Funded, Submitted, Completed, Rejected, Expired, Disputed }
+    enum JobState { Open, Funded, Submitted, Completed, Rejected, Expired }
 
     struct Job {
         uint256 id;
@@ -32,27 +28,24 @@ contract ArcAgenticLedger is Ownable, ReentrancyGuard {
     }
 
     IERC20 public immutable usdc;
-    IArcAgentIdentity public agentIdentity;
     uint256 public jobCounter;
     uint256 public constant FEE_PERCENT = 1; // 0.1% platform fee (example)
     address public treasury;
 
     mapping(uint256 => Job) public jobs;
     mapping(address => uint256[]) public userJobs;
+    mapping(address => uint256) public reputationScore; // Simple ERC-8004 style score
 
     event JobCreated(uint256 indexed jobId, address indexed client, address indexed provider, string description);
     event JobFunded(uint256 indexed jobId, uint256 amount);
     event JobSubmitted(uint256 indexed jobId, string deliverableHash);
     event JobCompleted(uint256 indexed jobId, address indexed evaluator);
     event JobRejected(uint256 indexed jobId, string reason);
-    event JobDisputed(uint256 indexed jobId, address indexed raisedBy, string reason);
-    event JobResolved(uint256 indexed jobId, uint256 providerPayout, uint256 clientRefund);
     event ReputationUpdated(address indexed user, uint256 newScore);
 
-    constructor(address _usdc, address _treasury, address _identity) Ownable(msg.sender) {
+    constructor(address _usdc, address _treasury) Ownable(msg.sender) {
         usdc = IERC20(_usdc);
         treasury = _treasury;
-        agentIdentity = IArcAgentIdentity(_identity);
     }
 
     /**
@@ -144,12 +137,10 @@ contract ArcAgenticLedger is Ownable, ReentrancyGuard {
         }
 
         job.state = JobState.Completed;
-
-        if (address(agentIdentity) != address(0)) {
-            agentIdentity.updateReputation(job.provider, 10);
-        }
+        reputationScore[job.provider] += 10; // Boost reputation
 
         emit JobCompleted(_jobId, msg.sender);
+        emit ReputationUpdated(job.provider, reputationScore[job.provider]);
     }
 
     /**
@@ -167,47 +158,6 @@ contract ArcAgenticLedger is Ownable, ReentrancyGuard {
 
         job.state = JobState.Rejected;
         emit JobRejected(_jobId, _reason);
-    }
-
-    /**
-     * @dev Raise a dispute (Client or Provider)
-     */
-    function raiseDispute(uint256 _jobId, string calldata _reason) external {
-        Job storage job = jobs[_jobId];
-        require(msg.sender == job.client || msg.sender == job.provider, "Unauthorized");
-        require(job.state == JobState.Funded || job.state == JobState.Submitted, "Invalid state for dispute");
-
-        job.state = JobState.Disputed;
-        emit JobDisputed(_jobId, msg.sender, _reason);
-    }
-
-    /**
-     * @dev Resolve a dispute (Arbitrator/Owner)
-     */
-    function resolveDispute(
-        uint256 _jobId,
-        uint256 _providerPayout,
-        uint256 _clientRefund
-    ) external onlyOwner nonReentrant {
-        Job storage job = jobs[_jobId];
-        require(job.state == JobState.Disputed, "Not in Disputed state");
-        require(_providerPayout + _clientRefund == job.budget, "Invalid split");
-
-        if (_providerPayout > 0) {
-            require(usdc.transfer(job.provider, _providerPayout), "Provider payout failed");
-        }
-        if (_clientRefund > 0) {
-            require(usdc.transfer(job.client, _clientRefund), "Client refund failed");
-        }
-
-        job.state = JobState.Completed; // Or a new Resolved state, but Completed is fine for ledger
-
-        // Neutral or partial reputation adjustment could be added here
-        if (_providerPayout >= job.budget / 2 && address(agentIdentity) != address(0)) {
-             agentIdentity.updateReputation(job.provider, 5); // Partial reputation for partial work
-        }
-
-        emit JobResolved(_jobId, _providerPayout, _clientRefund);
     }
 
     /**

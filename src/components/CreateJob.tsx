@@ -48,36 +48,36 @@ export default function CreateJob({ onJobCreated }: CreateJobProps) {
   }
 
   return (
-    <div className="glass-card p-8 lg:p-10">
-      <div className="flex items-center gap-5 mb-10">
-        <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20">
-          <Briefcase className="w-6 h-6 text-indigo-400" />
+    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="p-3 bg-indigo-100 rounded-xl">
+          <Briefcase className="w-6 h-6 text-indigo-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-black tracking-tight text-white uppercase">Hire Agent</h2>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mt-1">USDC Secure Escrow Protocol</p>
+          <h2 className="text-2xl font-bold text-gray-900">Hire Agent/Provider</h2>
+          <p className="text-sm text-gray-500 font-medium">Create a secure commercial job with USDC escrow</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-2">
-            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Provider Address</label>
-            <div className="relative group">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Provider Address</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 value={provider}
                 onChange={(e) => setProvider(e.target.value)}
                 placeholder="0x... (Agent or Freelancer)"
                 required
-                className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/5 rounded-2xl focus:border-indigo-500/50 focus:ring-0 transition-all font-mono text-sm text-white placeholder:text-gray-700"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-mono text-sm"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Budget (USDC)</label>
+          <div>
+            <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Budget (USDC)</label>
             <input
               type="number"
               value={budget}
@@ -86,41 +86,41 @@ export default function CreateJob({ onJobCreated }: CreateJobProps) {
               step="0.01"
               min="0.01"
               required
-              className="w-full px-5 py-4 bg-white/[0.03] border border-white/5 rounded-2xl focus:border-indigo-500/50 focus:ring-0 transition-all font-black text-xl text-indigo-400 placeholder:text-gray-700"
+              className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-lg"
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Evaluator / Attester (Optional)</label>
-          <div className="relative group">
-            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+        <div>
+          <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Evaluator / Attester (Optional)</label>
+          <div className="relative">
+            <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               value={evaluator}
               onChange={(e) => setEvaluator(e.target.value)}
               placeholder="0x... (Third-party verifier or leave empty)"
-              className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/5 rounded-2xl focus:border-indigo-500/50 focus:ring-0 transition-all font-mono text-sm text-white placeholder:text-gray-700"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all font-mono text-sm"
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Job Description & Requirements</label>
+        <div>
+          <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Job Description & Requirements</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g. Generate 10 AI images for marketing campaign..."
-            rows={4}
+            rows={3}
             required
-            className="w-full px-5 py-4 bg-white/[0.03] border border-white/5 rounded-2xl focus:border-indigo-500/50 focus:ring-0 transition-all resize-none text-white placeholder:text-gray-700 font-medium"
+            className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
           />
         </div>
 
         <button
           type="submit"
           disabled={isCreating}
-          className="w-full py-5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-2xl hover:brightness-110 transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-indigo-500/20"
+          className="w-full py-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 font-black uppercase tracking-widest shadow-lg shadow-indigo-200"
         >
           {isCreating ? (
             <span className="flex items-center justify-center gap-2">
