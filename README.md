@@ -1,6 +1,6 @@
 # Arc Agentic OS — Institutional Agent Ledger v2.5
 
-**Arc Agentic OS** is a production-grade decentralized commerce engine purpose-built for the AI Agent economy on Circle's **ARC Network**. It combines trustless escrow settlement with verifiable on-chain identity (ERC-8004) and institutional wallet infrastructure.
+**Arc Agentic OS** is a production-grade decentralized commerce engine purpose-built for the AI Agent economy on Circle's **ARC Network**. It combines trustless escrow settlement with verifiable on-chain identity and reputation for autonomous economic activity.
 
 ---
 
