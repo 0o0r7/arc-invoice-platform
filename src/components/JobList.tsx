@@ -14,7 +14,7 @@ import {
 import { getLedgerContract, getUSDCContract, getIdentityContract, formatUSDC, GAS_SETTINGS } from '../lib/arcNetwork';
 import { cn } from '../lib/utils';
 
-enum JobState { Open, Funded, Submitted, Completed, Rejected, Expired }
+enum JobState { Open, Funded, Submitted, Completed, Rejected, Expired, Disputed }
 
 interface Job {
   id: bigint;
@@ -119,6 +119,19 @@ export default function JobList({ userAddress, refreshTrigger }: JobListProps) {
     finally { setActionId(null); }
   }
 
+  async function handleRaiseDispute(jobId: bigint) {
+    const reason = prompt("Enter reason for dispute:");
+    if (!reason) return;
+    setActionId(jobId);
+    try {
+      const ledger = await getLedgerContract();
+      const tx = await ledger.raiseDispute(jobId, reason, { ...GAS_SETTINGS });
+      await tx.wait();
+      await loadData();
+    } catch (e) { console.error(e); }
+    finally { setActionId(null); }
+  }
+
   function getStatusStyle(state: number) {
     switch (state) {
       case JobState.Open: return "bg-white/5 text-gray-400 border-white/10";
@@ -126,6 +139,7 @@ export default function JobList({ userAddress, refreshTrigger }: JobListProps) {
       case JobState.Submitted: return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
       case JobState.Completed: return "bg-green-500/10 text-green-400 border-green-500/20";
       case JobState.Rejected: return "bg-red-500/10 text-red-400 border-red-500/20";
+      case JobState.Disputed: return "bg-purple-500/10 text-purple-400 border-purple-500/20";
       default: return "bg-white/5 text-gray-500 border-white/5";
     }
   }
@@ -230,6 +244,11 @@ export default function JobList({ userAddress, refreshTrigger }: JobListProps) {
                         {isEvaluator && Number(job.state) === JobState.Submitted && (
                           <button onClick={() => handleComplete(job.id)} disabled={actionId === job.id} className="px-6 py-3 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all">
                             Approve & Pay
+                          </button>
+                        )}
+                        {(isClient || isProvider) && (Number(job.state) === JobState.Funded || Number(job.state) === JobState.Submitted) && (
+                          <button onClick={() => handleRaiseDispute(job.id)} disabled={actionId === job.id} className="px-6 py-3 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-600/30 transition-all">
+                            Raise Dispute
                           </button>
                         )}
                       </div>

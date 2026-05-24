@@ -15,7 +15,7 @@ interface IArcAgentIdentity {
  * Purpose-built for ARC Network - The Economic OS for the Internet.
  */
 contract ArcAgenticLedger is Ownable, ReentrancyGuard {
-    enum JobState { Open, Funded, Submitted, Completed, Rejected, Expired }
+    enum JobState { Open, Funded, Submitted, Completed, Rejected, Expired, Disputed }
 
     struct Job {
         uint256 id;
@@ -45,6 +45,8 @@ contract ArcAgenticLedger is Ownable, ReentrancyGuard {
     event JobSubmitted(uint256 indexed jobId, string deliverableHash);
     event JobCompleted(uint256 indexed jobId, address indexed evaluator);
     event JobRejected(uint256 indexed jobId, string reason);
+    event JobDisputed(uint256 indexed jobId, address indexed raisedBy, string reason);
+    event JobResolved(uint256 indexed jobId, uint256 providerPayout, uint256 clientRefund);
     event ReputationUpdated(address indexed user, uint256 newScore);
 
     constructor(address _usdc, address _treasury, address _identity) Ownable(msg.sender) {
@@ -165,6 +167,47 @@ contract ArcAgenticLedger is Ownable, ReentrancyGuard {
 
         job.state = JobState.Rejected;
         emit JobRejected(_jobId, _reason);
+    }
+
+    /**
+     * @dev Raise a dispute (Client or Provider)
+     */
+    function raiseDispute(uint256 _jobId, string calldata _reason) external {
+        Job storage job = jobs[_jobId];
+        require(msg.sender == job.client || msg.sender == job.provider, "Unauthorized");
+        require(job.state == JobState.Funded || job.state == JobState.Submitted, "Invalid state for dispute");
+
+        job.state = JobState.Disputed;
+        emit JobDisputed(_jobId, msg.sender, _reason);
+    }
+
+    /**
+     * @dev Resolve a dispute (Arbitrator/Owner)
+     */
+    function resolveDispute(
+        uint256 _jobId,
+        uint256 _providerPayout,
+        uint256 _clientRefund
+    ) external onlyOwner nonReentrant {
+        Job storage job = jobs[_jobId];
+        require(job.state == JobState.Disputed, "Not in Disputed state");
+        require(_providerPayout + _clientRefund == job.budget, "Invalid split");
+
+        if (_providerPayout > 0) {
+            require(usdc.transfer(job.provider, _providerPayout), "Provider payout failed");
+        }
+        if (_clientRefund > 0) {
+            require(usdc.transfer(job.client, _clientRefund), "Client refund failed");
+        }
+
+        job.state = JobState.Completed; // Or a new Resolved state, but Completed is fine for ledger
+
+        // Neutral or partial reputation adjustment could be added here
+        if (_providerPayout >= job.budget / 2 && address(agentIdentity) != address(0)) {
+             agentIdentity.updateReputation(job.provider, 5); // Partial reputation for partial work
+        }
+
+        emit JobResolved(_jobId, _providerPayout, _clientRefund);
     }
 
     /**

@@ -20,6 +20,8 @@ export const LEDGER_ABI = [
   'function submitWork(uint256 _jobId, string calldata _deliverableHash) external',
   'function completeJob(uint256 _jobId) external',
   'function rejectJob(uint256 _jobId, string calldata _reason) external',
+  'function raiseDispute(uint256 _jobId, string calldata _reason) external',
+  'function resolveDispute(uint256 _jobId, uint256 _providerPayout, uint256 _clientRefund) external',
   'function triggerExpiry(uint256 _jobId) external',
   'function getJob(uint256 _jobId) external view returns (tuple(uint256 id, address client, address provider, address evaluator, uint256 budget, uint8 state, string description, string deliverableHash, uint256 createdAt, uint256 expiresAt, uint256 platformFee))',
   'function getUserJobs(address _user) external view returns (uint256[])',
@@ -29,6 +31,8 @@ export const LEDGER_ABI = [
   'event JobSubmitted(uint256 indexed jobId, string deliverableHash)',
   'event JobCompleted(uint256 indexed jobId, address indexed evaluator)',
   'event JobRejected(uint256 indexed jobId, string reason)',
+  'event JobDisputed(uint256 indexed jobId, address indexed raisedBy, string reason)',
+  'event JobResolved(uint256 indexed jobId, uint256 providerPayout, uint256 clientRefund)',
   'event ReputationUpdated(address indexed user, uint256 newScore)'
 ];
 
@@ -98,7 +102,7 @@ export async function getUSDCContract() {
 }
 
 export const GAS_SETTINGS = {
-  maxFeePerGas: parseUnits('20', 'gwei'),
+  maxFeePerGas: parseUnits('160', 'gwei'), // Aligned with ARC 2026 institutional stability floor
   maxPriorityFeePerGas: parseUnits('1', 'gwei'),
 };
 

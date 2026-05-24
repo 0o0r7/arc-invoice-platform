@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "../contracts/ArcAgenticLedger.sol";
+import "../contracts/ArcAgentIdentity.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockUSDC is ERC20 {
@@ -17,6 +18,7 @@ contract MockUSDC is ERC20 {
 
 contract ArcAgenticLedgerTest is Test {
     ArcAgenticLedger public ledger;
+    ArcAgentIdentity public identity;
     MockUSDC public usdc;
     address public client = address(0x111);
     address public provider = address(0x222);
@@ -25,8 +27,16 @@ contract ArcAgenticLedgerTest is Test {
 
     function setUp() public {
         usdc = new MockUSDC();
-        ledger = new ArcAgenticLedger(address(usdc), treasury);
+        identity = new ArcAgentIdentity();
+        ledger = new ArcAgenticLedger(address(usdc), treasury, address(identity));
+
+        identity.setAuthorizedCaller(address(ledger), true);
+
         usdc.mint(client, 1000e6);
+
+        // Register provider for reputation tracking
+        vm.prank(provider);
+        identity.registerAgent("Agent 007", "ipfs://metadata");
     }
 
     function testFullLifecycle() public {
@@ -61,7 +71,9 @@ contract ArcAgenticLedgerTest is Test {
         assertEq(usdc.balanceOf(provider), budget - fee);
         assertEq(usdc.balanceOf(treasury), fee);
         assertEq(uint(ledger.getJob(jobId).state), uint(ArcAgenticLedger.JobState.Completed));
-        assertEq(ledger.reputationScore(provider), 10);
+
+        ArcAgentIdentity.AgentProfile memory profile = identity.getAgentProfile(provider);
+        assertEq(profile.reputationScore, 10);
     }
 
     function testRejectAndRefund() public {
